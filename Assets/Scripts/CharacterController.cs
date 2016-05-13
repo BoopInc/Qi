@@ -115,7 +115,9 @@ public class CharacterController : MonoBehaviour {
         //Dash
         if (Input.GetKeyDown(KeyCode.LeftShift) && canDash) {
             canDash = false;
-            dashStart = new Vector2(transform.position.x,transform.position.y);
+            // dashStart = new Vector2(transform.position.x,transform.position.y);
+            dashStart = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
             dashDistance = 0;
             dashStop = false;
 
@@ -208,32 +210,52 @@ public class CharacterController : MonoBehaviour {
         //Vector2 predictedPosition = new Vector2(transform.position.x, transform.position.y) + Time.deltaTime * rb.velocity;
         Vector2 predictedPosition = CalcFuturePos(1);
         //if is dashing
-        if (!canDash) {
+        /*if (!canDash) {
             speedMultiplier = 3.10f;
-           
-            if (!dashStop)
-            {
-                cursorPosition = Input.mousePosition;
-                cursorPosition.z = 0;
+            
+             if (!dashStop)
+             {
+                 cursorPosition = Input.mousePosition;
+                 cursorPosition.z = 0;
 
-                Vector3 objectPos = Camera.main.WorldToScreenPoint(transform.position);
-                cursorPosition.x = cursorPosition.x - objectPos.x;
-                cursorPosition.y = cursorPosition.y - objectPos.y;
-                angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x);
-                dashStop = true;
-            }
+                 Vector3 objectPos = Camera.main.WorldToScreenPoint(transform.position);
+                 cursorPosition.x = cursorPosition.x - objectPos.x;
+                 cursorPosition.y = cursorPosition.y - objectPos.y;
+                 angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x);
+                 dashStop = true;
+             }
 
-           
-            GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * speedMultiplier, Mathf.Sin(angle) * speedMultiplier);
-            /*if (dashDistance >= 0.37  || dashDistance >= dashStartDistance) {
+
+             GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * speedMultiplier, Mathf.Sin(angle) * speedMultiplier);
+             
+            if (dashDistance >= 0.37  || dashDistance >= dashStartDistance) {
                 StartCoroutine("staminaRegen");
                 StopCoroutine("dash");
                 StartCoroutine("movementPause");
                 speedMultiplier = 0;
                 dashStop = true;
-            }*/
+            }
+      
+            transform.position = Vector2.MoveTowards(transform.position, dashStart,.1f);
+         
+
         }
+        */
         dashDistance = Vector2.Distance(dashStart, new Vector2(transform.position.x, transform.position.y));
+    }
+
+    void FixedUpdate() {
+        //If you are dashing
+        if (!canDash) {
+            GetComponent<Rigidbody2D>().MovePosition(Vector2.MoveTowards(transform.position,dashStart,.1f));
+            if (new Vector2(transform.position.x, transform.position.y) == dashStart)
+            {
+                StartCoroutine("staminaRegen");
+                StopCoroutine("dash");
+                StartCoroutine("movementPause");
+                dashStop = true;
+            }
+        }
     }
 
     Vector2 CalcFuturePos(float i) {
@@ -401,6 +423,7 @@ public class CharacterController : MonoBehaviour {
     }
 
     IEnumerator movementPause() {
+        speedMultiplier = 0;
         yield return new WaitForSeconds(.2f);
         canDash = true;
         speedMultiplier = 1f;
@@ -411,7 +434,7 @@ public class CharacterController : MonoBehaviour {
     IEnumerator dash() {
         canDash = false;
         //get distance of cursor
-        yield return new WaitForSeconds(dashTime);
+        yield return new WaitForSeconds(.075f);
         canDash = true;
         speedMultiplier = 0f;
         print(dashDistance + ", " + dashStartDistance);
@@ -428,10 +451,11 @@ public class CharacterController : MonoBehaviour {
         myStats.regenStamina = true;
     }
 
-    void OnCollisionEnter2D(Collision2D other) {
-        if(other.gameObject.tag == "ground")
-            speedMultiplier = 1f;
-
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.tag == "Wall") { 
+        
+        }
        // if (other.gameObject.tag == "Enemy") {
          //   GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
         //}
