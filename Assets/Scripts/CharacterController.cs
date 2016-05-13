@@ -108,10 +108,9 @@ public class CharacterController : MonoBehaviour {
             }
 
         //Dodge
-        if (Input.GetKeyDown(KeyCode.Space) && canRoll) {
-            canRoll = false;
-            StartCoroutine("dodge");
-        }
+       
+            doubleTap();
+        
         //Dash
         if (Input.GetKeyDown(KeyCode.LeftShift) && canDash) {
             canDash = false;
