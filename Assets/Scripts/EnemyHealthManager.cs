@@ -5,37 +5,30 @@ using UnityEngine.UI;
 public class EnemyHealthManager : MonoBehaviour
 {
 
-    public GameObject healthBar;
-    [Header("Stat Numbers")]
+    [Header("Stats")]
     public float staminaRate;
+    public GameObject healthBar;
 
     public bool regenStamina;
     private float health, stamina;
 
-    // Use this for initialization
     void Start()
     {
-        //Set Values
+        //Set Stat Values
         health = 10;
         stamina = 10;
         regenStamina = true;
     }
 
-    // Update is called once per frame
     void Update()
     {
         //Update ui numbers
         healthBar.GetComponent<Slider>().value = health;
 
-        //Death
+        //If health is zero or negative delete enemy, DEATH
         if (health <= 0)
         {
             Destroy(gameObject);
-        }
-
-        if (health > 10)
-        {
-            setHealth(10);
         }
 
         if (stamina < 0)
@@ -43,11 +36,7 @@ public class EnemyHealthManager : MonoBehaviour
             setStamina(0);
         }
 
-        if (stamina > 10)
-        {
-            setStamina(10);
-        }
-
+        //If stamina regen is enabled increase stamina
         if (regenStamina)
             changeStamina(staminaRate * Time.deltaTime);
 

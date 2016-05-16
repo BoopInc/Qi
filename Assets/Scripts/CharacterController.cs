@@ -7,7 +7,16 @@ public class CharacterController : MonoBehaviour {
     private float speedMultiplier;
     public int directionX, directionY;
     private StatManager myStats;
+    private Transform beginningParent;
 
+    private float onObjectHeight;
+
+    //Conditions
+    private bool onObject;
+    private bool inDropArea;
+    private bool isFalling;
+    private bool inClimbArea;
+    private bool isClimbing;
     //Dash
     private int tapCount = 0;
     private float tapCooler = 0.3f;
@@ -18,6 +27,7 @@ public class CharacterController : MonoBehaviour {
     public float speed;
     public float rollCost;
 
+    private bool canJump;
     public bool canMove;
     private bool canRoll;
     private bool canDash;
@@ -25,6 +35,7 @@ public class CharacterController : MonoBehaviour {
     private bool onStairsLeft;
     private bool onStairsRight;
     private bool onPlatform;
+    private bool onMovingPlatform;
     private bool inWater;
     private bool dashStop;
     float angle = 0;
@@ -51,17 +62,28 @@ public class CharacterController : MonoBehaviour {
         onPlatform = false;
         inWater = false;
         dashStop = false;
+        canJump = true;
+        onObject = false;
+        onMovingPlatform = false;
+        inDropArea = false;
+        isFalling = false;
+        inClimbArea = false;
+        isClimbing = false;
 
         speedMultiplier = 1f;
         tapCount = 0;
         directionX = 0;
         directionY = 0;
+
+        beginningParent = transform.parent;
 	}
 
     // Update is called once per frame
     void Update() {
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
 
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (!isClimbing || !isFalling)
+        {
             //Movement
             if (Input.GetKey(KeyCode.A))
             {
@@ -73,7 +95,8 @@ public class CharacterController : MonoBehaviour {
                 moveH = 1;
                 directionX = 1;
             }
-            else {
+            else
+            {
                 moveH = 0;
                 directionX = 0;
             }
@@ -93,6 +116,14 @@ public class CharacterController : MonoBehaviour {
                 moveY = 0;
                 directionY = 0;
             }
+        }else
+        {
+            moveY = 0;
+            moveH = 0;
+            directionX = 0;
+            directionY = 0;
+        }
+
 
             if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.W) ||
                 Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.S) ||
@@ -107,9 +138,13 @@ public class CharacterController : MonoBehaviour {
                 moveY = directionY;
             }
 
-        //Dodge
-       
-            doubleTap();
+            //Dodge
+            if(Input.GetKeyDown(KeyCode.Space) && canRoll)
+            {
+                StartCoroutine("dodge");
+                canRoll = false;
+            }
+            //doubleTap();
         
         //Dash
         if (Input.GetKeyDown(KeyCode.LeftShift) && canDash) {
@@ -166,15 +201,28 @@ public class CharacterController : MonoBehaviour {
         {
             rb.velocity = new Vector2(0, 0);
         }
+
         if (!canRoll)
         {
             //Ignore collision with enemies
             Physics2D.IgnoreLayerCollision(9, 10);
             GetComponent<Collider2D>().enabled = false;
             GetComponent<Collider2D>().enabled = true;
+
+            Physics2D.IgnoreLayerCollision(9, 10);
+            GetComponent<Collider2D>().enabled = false;
+            GetComponent<Collider2D>().enabled = true;
+
+            Physics2D.IgnoreLayerCollision(9, 17);
+            GetComponent<Collider2D>().enabled = false;
+            GetComponent<Collider2D>().enabled = true;
         }
         else {
             Physics2D.IgnoreLayerCollision(9, 10,false);
+            GetComponent<Collider2D>().enabled = false;
+            GetComponent<Collider2D>().enabled = true;
+
+            Physics2D.IgnoreLayerCollision(9, 17, false);
             GetComponent<Collider2D>().enabled = false;
             GetComponent<Collider2D>().enabled = true;
         }
@@ -205,42 +253,19 @@ public class CharacterController : MonoBehaviour {
             GetComponent<Collider2D>().enabled = true;
         }
 
-        //Prediction
-        //Vector2 predictedPosition = new Vector2(transform.position.x, transform.position.y) + Time.deltaTime * rb.velocity;
-        Vector2 predictedPosition = CalcFuturePos(1);
-        //if is dashing
-        /*if (!canDash) {
-            speedMultiplier = 3.10f;
-            
-             if (!dashStop)
-             {
-                 cursorPosition = Input.mousePosition;
-                 cursorPosition.z = 0;
-
-                 Vector3 objectPos = Camera.main.WorldToScreenPoint(transform.position);
-                 cursorPosition.x = cursorPosition.x - objectPos.x;
-                 cursorPosition.y = cursorPosition.y - objectPos.y;
-                 angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x);
-                 dashStop = true;
-             }
-
-
-             GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * speedMultiplier, Mathf.Sin(angle) * speedMultiplier);
-             
-            if (dashDistance >= 0.37  || dashDistance >= dashStartDistance) {
-                StartCoroutine("staminaRegen");
-                StopCoroutine("dash");
-                StartCoroutine("movementPause");
-                speedMultiplier = 0;
-                dashStop = true;
-            }
-      
-            transform.position = Vector2.MoveTowards(transform.position, dashStart,.1f);
-         
-
+        if (isFalling || isClimbing) {
+            Physics2D.IgnoreLayerCollision(9, 11);
+            GetComponent<Collider2D>().enabled = false;
+            GetComponent<Collider2D>().enabled = true;
+        }else
+        {
+            Physics2D.IgnoreLayerCollision(9, 11, false);
+            GetComponent<Collider2D>().enabled = false;
+            GetComponent<Collider2D>().enabled = true;
         }
-        */
+
         dashDistance = Vector2.Distance(dashStart, new Vector2(transform.position.x, transform.position.y));
+        Interactables();
     }
 
     void FixedUpdate() {
@@ -254,11 +279,36 @@ public class CharacterController : MonoBehaviour {
                 StartCoroutine("movementPause");
                 dashStop = true;
             }
+
+
         }
+
     }
 
     Vector2 CalcFuturePos(float i) {
         return new Vector2(transform.position.x, transform.position.y) + GetComponent<Rigidbody2D>().velocity * Time.deltaTime;
+    }
+
+    void Interactables()
+    {
+        if (inDropArea && Input.GetKeyDown(KeyCode.LeftControl)) {
+            isFalling = true;
+        }
+
+        if(isFalling)
+        {
+            GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x,-1.2f);
+        }
+
+        if(inClimbArea && !isFalling && Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            isClimbing = true;
+        }
+
+        if(isClimbing)
+        {
+            GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0.6f);
+        }
     }
 
     void doubleTap()
@@ -375,48 +425,22 @@ public class CharacterController : MonoBehaviour {
         }
     }
 
-    IEnumerator sprintChargeUp() {
-        bool heldDown = true;
-
-        for (int i = 0; i < 2; i++) {
-            if (Input.GetKey(KeyCode.LeftShift))
-            {
-                yield return new WaitForSeconds(.25f);
-            }
-            else {
-                heldDown = false;
-                canMove = true;
-                wasSprinting = false; ;
-                myStats.regenStamina = true;
-                speedMultiplier = 1f;
-                break;
-            }
-        }
-
-        if (heldDown && Input.GetKey(KeyCode.LeftShift))
-        {
-            wasSprinting = true;
-            speedMultiplier = 1.77f;
-            canMove = true;
-        }
-        else {
-            canMove = true;
-            wasSprinting = false; ;
-        }
-
+    IEnumerator jump() {
+        yield return new WaitForSeconds(0f);
+        canJump = true;
     }
 
     IEnumerator dodge() {
         StopCoroutine("staminaRegen");
         myStats.regenStamina = false;
         GetComponent<StatManager>().changeStamina(-rollCost);
-
         canRoll = false;
-        speedMultiplier = 4.10f;
+        speedMultiplier = 4.60f;
         yield return new WaitForSeconds(.04f);
         speedMultiplier = 1f;
         canRoll = true;
-
+     
+  
         //Start stamina regen after 1 second
         StartCoroutine("staminaRegen");
     }
@@ -455,9 +479,6 @@ public class CharacterController : MonoBehaviour {
         if (other.gameObject.tag == "Wall") { 
         
         }
-       // if (other.gameObject.tag == "Enemy") {
-         //   GetComponent<Rigidbody2D>().velocity = new Vector2(0, 0);
-        //}
     }
 
     void OnTriggerEnter2D(Collider2D other) {
@@ -476,6 +497,39 @@ public class CharacterController : MonoBehaviour {
         {
             inWater = true;
         }
+        if (other.gameObject.tag == "MovingPlatform") {
+            transform.parent = other.transform.parent;
+        }
+        if (other.tag == "Camera")
+        {
+            GameObject.FindGameObjectWithTag("Camera").GetComponent<CameraController>().inBounds = true;
+        }
+        if (other.tag == "Camera Zone") {
+            GameObject cam = GameObject.FindGameObjectWithTag("Camera");
+            cam.GetComponent<CameraController>().smoothTimeX = other.GetComponent<CameraZone>().SmoothTimeX;
+            cam.GetComponent<CameraController>().smoothTimeY = other.GetComponent<CameraZone>().SmoothTimeY;
+            cam.GetComponent<CameraController>().xSmoothX = other.GetComponent<CameraZone>().xSmoothX;
+            cam.GetComponent<CameraController>().xSmoothY = other.GetComponent<CameraZone>().xSmoothY;
+            cam.GetComponent<CameraController>().targetZoom = other.GetComponent<CameraZone>().zoom;
+            cam.GetComponent<CameraController>().lockCam = other.GetComponent<CameraZone>().lockCam;
+            cam.GetComponent<CameraController>().targetPos = other.GetComponent<CameraZone>().pos;
+            cam.GetComponent<CameraController>().zoomSpeed = other.GetComponent<CameraZone>().zoomSpeed;
+            cam.GetComponent<CameraController>().goToLockSpeed = other.GetComponent<CameraZone>().goToLockSpeed;
+            cam.GetComponent<CameraController>().reset = false;
+        }
+        if(other.tag == "Drop Area")
+        {
+            inDropArea = true;
+        }
+        if (other.tag == "Climb Area")
+        {
+            inClimbArea = true;
+        }
+    }
+
+    void OnTriggerStay2D(Collider2D other)
+    {
+
     }
 
     void OnTriggerExit2D(Collider2D other) {
@@ -495,5 +549,43 @@ public class CharacterController : MonoBehaviour {
         {
             inWater = false;
         }
+        if (other.gameObject.tag == "MovingPlatform")
+        {
+            transform.parent = beginningParent;
+        }
+        if (other.tag == "Camera")
+        {
+            GameObject.FindGameObjectWithTag("Camera").GetComponent<CameraController>().inBounds = false;
+        }
+        if (other.tag == "Camera Zone")
+        {
+            GameObject cam = GameObject.FindGameObjectWithTag("Camera");
+            cam.GetComponent<CameraController>().smoothTimeX = cam.GetComponent<CameraController>().startSmootTimeX;
+            cam.GetComponent<CameraController>().smoothTimeY = cam.GetComponent<CameraController>().StartSmoothTimeY;
+            cam.GetComponent<CameraController>().xSmoothX = other.GetComponent<CameraZone>().leaveZoomSpeed;
+            cam.GetComponent<CameraController>().xSmoothY = cam.GetComponent<CameraController>().StartXSmoothY;
+            cam.GetComponent<CameraController>().targetZoom = 0.6f;
+            cam.GetComponent<CameraController>().lockCam = false;
+            cam.GetComponent<CameraController>().zoomSpeed = other.GetComponent<CameraZone>().zoomSpeed;
+            cam.GetComponent<CameraController>().goToLockSpeed = other.GetComponent<CameraZone>().goToLockSpeed;
+            cam.GetComponent<CameraController>().reset = true;
+        }
+        if (other.tag == "Drop Area")
+        {
+            if(isFalling)
+                StartCoroutine("movementPause");
+
+            inDropArea = false;
+            isFalling = false;
+        }
+        if (other.tag == "Climb Area")
+        {
+            if(isClimbing)
+                StartCoroutine("movementPause");
+
+            inClimbArea = false;
+            isClimbing = false;
+        }
+
     }
 }

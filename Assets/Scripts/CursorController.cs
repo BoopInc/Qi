@@ -5,16 +5,17 @@ public class CursorController : MonoBehaviour {
 
     public Vector3 cursorPosition;
 
-	// Use this for initialization
 	void Start () {
+        //Get rid of windows cursor
         Cursor.visible = false;
 	}
 	
-	// Update is called once per frame
 	void Update () {
+        //Update cursor position
         cursorPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         cursorPosition.z = 0;
 
+        //Move cursor object to cursor
         transform.position = cursorPosition;
     }
 }

@@ -1,30 +1,32 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+//This script controls ranged attack collision and death
+
 public class projectileDeath : MonoBehaviour {
 
-	// Use this for initialization
 	void Start () {
-        StartCoroutine("timer2");
+        StartCoroutine("attackFrame");
 	}
 
-    IEnumerator timer2() {
+    IEnumerator attackFrame() {
         yield return new WaitForSeconds(3f);
         Destroy(gameObject);
     }
 
     void OnCollisionEnter2D(Collision2D other)
     {
+        //If ranged attack hits enemy, deal damage to it and delete hitbox
         if (other.gameObject.tag == "Enemy")
         {
             other.gameObject.GetComponent<Ai1>().currentState = Ai1.State.Chase;
             other.gameObject.GetComponent<EnemyHealthManager>().changeHealth(-2f);
-            StopCoroutine("timer2");
+            StopCoroutine("attackFrame");
             Destroy(gameObject);
         }
-
+        //If ranged attack hits wall, delete hitbox
         if (other.gameObject.tag == "Wall") {
-            StopCoroutine("timer2");
+            StopCoroutine("attackFrame");
             Destroy(gameObject);
         }
     }

@@ -5,38 +5,40 @@ public class MeleeController : MonoBehaviour {
 
     private GameObject player;
 
-    // Use this for initialization
     void Start() {
         player = GameObject.FindGameObjectWithTag("Player");
 
-        //Tilt
+        //Set melee attack direction
+        //Find cursor position
         Vector3 cursorPosition = Input.mousePosition;
         cursorPosition.z = 0;
 
-        Vector3 objectPos = Camera.main.WorldToScreenPoint(transform.position);
-        cursorPosition.x = cursorPosition.x - objectPos.x;
-        cursorPosition.y = cursorPosition.y - objectPos.y;
+        //Find player position
+        Vector3 playerPos = Camera.main.WorldToScreenPoint(transform.position);
+        cursorPosition.x = cursorPosition.x - playerPos.x;
+        cursorPosition.y = cursorPosition.y - playerPos.y;
 
+        //Calculate angle between player and cursor
         float angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x) * (180 / Mathf.PI);
 
-        CharacterController cc = player.GetComponent<CharacterController>();
-        //float angle = Mathf.Atan2(cc.directionY, cc.directionX) * (180 / Mathf.PI);
+        //Assign melee direction
         transform.rotation = Quaternion.Euler(0, 0, angle - 90);
 
-        StartCoroutine("timer2");
+        StartCoroutine("attackFrame");
     }
 	
-	// Update is called once per frame
 	void Update () {
+        //Make melee hitbox follow player
         transform.position = new Vector2(player.transform.position.x, player.transform.position.y);
     }
 
-    IEnumerator timer2() {
+    IEnumerator attackFrame() {
         yield return new WaitForSeconds(.2f);
         Destroy(gameObject);
     }
 
     void OnTriggerEnter2D(Collider2D other) {
+        //If ability hits player, then do damage
         if (other.tag == "Enemy") {
             other.GetComponent<EnemyHealthManager>().changeHealth(-3f);
         }

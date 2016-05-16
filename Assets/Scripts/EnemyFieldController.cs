@@ -1,28 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+//This class controls enemy attack hitbox times
+
 public class EnemyFieldController : MonoBehaviour {
 
-	// Use this for initialization
 	void Start () {
-        StartCoroutine("timer");
+        StartCoroutine("attackFrame");
 	}
 	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-    IEnumerator timer() {
+    IEnumerator attackFrame() {
         yield return new WaitForSeconds(.2f);
         Destroy(gameObject);
     }
 
     void OnTriggerEnter2D(Collider2D other) {
+        //If hitbox hits player than damage player and delete hitbox
         if (other.tag == "Player")
         {
-            print("Hit player");
-            //Damage Player
             other.GetComponent<StatManager>().changeHealth(-GetComponent<AttackProperties>().damage);
             Destroy(gameObject);
         }

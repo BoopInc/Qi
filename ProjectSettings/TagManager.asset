@@ -16,6 +16,14 @@ TagManager:
   - Platform
   - Water
   - PlatformArea
+  - LandHeight
+  - StairHeight
+  - TopCollision
+  - MovingPlatform
+  - Camera
+  - Camera Zone
+  - Drop Area
+  - Climb Area
   layers:
   - Default
   - TransparentFX
@@ -36,12 +44,12 @@ TagManager:
   - Stair
   - Platform
   - PlatformArea
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Top Collision
+  - Bottom Collision
+  - Camera
+  - Camera Zone
+  - Drop Area
+  - Climb Area
   - 
   - 
   - 
@@ -62,11 +70,14 @@ TagManager:
   - name: Enemy
     uniqueID: 2308993455
     locked: 0
-  - name: Player
-    uniqueID: 3538526769
+  - name: lowerPlayerAboveMap
+    uniqueID: 786733227
     locked: 0
   - name: Map
     uniqueID: 322167915
+    locked: 0
+  - name: Player
+    uniqueID: 3538526769
     locked: 0
   - name: MapOnTop
     uniqueID: 1033878309
