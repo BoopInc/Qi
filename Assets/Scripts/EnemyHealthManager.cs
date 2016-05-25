@@ -8,6 +8,8 @@ public class EnemyHealthManager : MonoBehaviour
     [Header("Stats")]
     public float staminaRate;
     public GameObject healthBar;
+    public float maxHealth;
+    public GameObject healthOrb;
 
     public bool regenStamina;
     private float health, stamina;
@@ -15,8 +17,8 @@ public class EnemyHealthManager : MonoBehaviour
     void Start()
     {
         //Set Stat Values
-        health = 10;
-        stamina = 10;
+        health = maxHealth;
+        stamina = 3;
         regenStamina = true;
     }
 
@@ -24,10 +26,17 @@ public class EnemyHealthManager : MonoBehaviour
     {
         //Update ui numbers
         healthBar.GetComponent<Slider>().value = health;
+        healthBar.GetComponent<Slider>().maxValue = maxHealth;
 
         //If health is zero or negative delete enemy, DEATH
         if (health <= 0)
         {
+            float ran = Random.Range(0, 3);
+            if(ran < 2)
+            {
+                Instantiate(healthOrb, transform.position, Quaternion.identity);
+            }
+         
             Destroy(gameObject);
         }
 
@@ -50,6 +59,8 @@ public class EnemyHealthManager : MonoBehaviour
     public void changeHealth(float num)
     {
         health = health + num;
+        //GameObject cam = GameObject.FindGameObjectWithTag("Camera");
+        //cam.GetComponent<CameraController>().StartCoroutine("LightShake");
     }
 
     void setStamina(float num)

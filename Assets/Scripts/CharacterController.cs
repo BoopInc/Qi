@@ -26,11 +26,12 @@ public class CharacterController : MonoBehaviour {
     [Header("Numbers")]
     public float speed;
     public float rollCost;
+    public float dashCost;
 
     private bool canJump;
     public bool canMove;
     private bool canRoll;
-    private bool canDash;
+    public bool canDash;
     private bool wasSprinting;
     private bool onStairsLeft;
     private bool onStairsRight;
@@ -139,15 +140,15 @@ public class CharacterController : MonoBehaviour {
             }
 
             //Dodge
-            if(Input.GetKeyDown(KeyCode.Space) && canRoll)
+            if(Input.GetKeyDown(KeyCode.Space) && canRoll && GetComponent<StatManager>().getStamina() >= rollCost)
             {
                 StartCoroutine("dodge");
                 canRoll = false;
             }
-            //doubleTap();
-        
+        //doubleTap();
+
         //Dash
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash) {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash && GetComponent<StatManager>().getStamina() >= dashCost) {
             canDash = false;
             // dashStart = new Vector2(transform.position.x,transform.position.y);
             dashStart = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -157,9 +158,9 @@ public class CharacterController : MonoBehaviour {
 
             //Cursor Distance
             dashStartDistance = Vector2.Distance(dashStart,Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            dashTime = (float) ((.1 *dashStartDistance) / (0.3719999));
-            if (dashTime >= .1)
-                dashTime = .1f;
+            dashTime = (float) ((.15 *dashStartDistance) / (0.3719999));
+            if (dashTime >= .15)
+                dashTime = .15f;
             StartCoroutine("dash");
         }
 
@@ -263,15 +264,34 @@ public class CharacterController : MonoBehaviour {
             GetComponent<Collider2D>().enabled = false;
             GetComponent<Collider2D>().enabled = true;
         }
-
+     
         dashDistance = Vector2.Distance(dashStart, new Vector2(transform.position.x, transform.position.y));
         Interactables();
+
+        if (onStairsLeft && canDash == false)
+        {
+            StopCoroutine("dash");
+            StartCoroutine("movementPause");
+            canDash = true;
+            dashStop = true;
+            speedMultiplier = 0; 
+        }
+       
+
+        if (onStairsRight && canDash == false)
+        {
+            StopCoroutine("dash");
+            StartCoroutine("movementPause");
+            canDash = true;
+            dashStop = true;
+            speedMultiplier = 0;
+        }
     }
 
     void FixedUpdate() {
         //If you are dashing
-        if (!canDash) {
-            GetComponent<Rigidbody2D>().MovePosition(Vector2.MoveTowards(transform.position,dashStart,.1f));
+        if (!canDash && dashStop == false) {
+            GetComponent<Rigidbody2D>().MovePosition(Vector2.MoveTowards(transform.position,dashStart,.07f));
             if (new Vector2(transform.position.x, transform.position.y) == dashStart)
             {
                 StartCoroutine("staminaRegen");
@@ -282,6 +302,7 @@ public class CharacterController : MonoBehaviour {
 
 
         }
+
 
     }
 
@@ -455,12 +476,13 @@ public class CharacterController : MonoBehaviour {
     }
 
     IEnumerator dash() {
+        StopCoroutine("staminaRegen");
+        GetComponent<StatManager>().changeStamina(-dashCost);
         canDash = false;
         //get distance of cursor
-        yield return new WaitForSeconds(.075f);
+        yield return new WaitForSeconds(.1f);
         canDash = true;
         speedMultiplier = 0f;
-        print(dashDistance + ", " + dashStartDistance);
         yield return new WaitForSeconds(.2f);
         speedMultiplier = 1f;
         dashStop = false;
@@ -529,7 +551,10 @@ public class CharacterController : MonoBehaviour {
 
     void OnTriggerStay2D(Collider2D other)
     {
-
+        if (other.gameObject.tag == "StairLeft")
+        {
+            onStairsLeft = true;
+        }
     }
 
     void OnTriggerExit2D(Collider2D other) {

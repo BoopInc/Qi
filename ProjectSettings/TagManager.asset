@@ -24,6 +24,9 @@ TagManager:
   - Camera Zone
   - Drop Area
   - Climb Area
+  - hitboxDASH
+  - hotboxDASH
+  - health orb
   layers:
   - Default
   - TransparentFX
@@ -58,11 +61,14 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
   - name: Map
     uniqueID: 1373043087
     locked: 0
-  - name: Default
-    uniqueID: 0
+  - name: MapTop
+    uniqueID: 2768912233
     locked: 0
   - name: Projectiles
     uniqueID: 3851004079

@@ -4,6 +4,7 @@ using System.Collections;
 public class MeleeController : MonoBehaviour {
 
     private GameObject player;
+    private float angleX,angleY;
 
     void Start() {
         player = GameObject.FindGameObjectWithTag("Player");
@@ -40,7 +41,31 @@ public class MeleeController : MonoBehaviour {
     void OnTriggerEnter2D(Collider2D other) {
         //If ability hits player, then do damage
         if (other.tag == "Enemy") {
-            other.GetComponent<EnemyHealthManager>().changeHealth(-3f);
+            Vector3 cursorPosition = Input.mousePosition;
+            cursorPosition.z = 0;
+
+            //find character position on screen
+            player = GameObject.FindGameObjectWithTag("Player");
+            Vector3 playerPos = Camera.main.WorldToScreenPoint(player.transform.position);
+
+            //Find differences in the x,y components of player and cursor
+            cursorPosition.x = cursorPosition.x - playerPos.x;
+            cursorPosition.y = cursorPosition.y - playerPos.y;
+
+            //Calculate angle between player and cursor
+            float angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x);
+
+            other.GetComponent<Rigidbody2D>().AddForce(new Vector3(Mathf.Cos(angle) * 22,Mathf.Sin(angle) * 22,0) * 10,ForceMode2D.Impulse);
+            other.GetComponent<EnemyHealthManager>().changeHealth(-1f);
+            other.GetComponent<Ai1>().StopCoroutine("delaySwitchToAttack");
+            if (Random.Range(0, 2) == 1)
+            {
+                other.GetComponent<Ai1>().StartCoroutine("delaySwitchToAttack");
+            }
+            else
+            {
+                other.GetComponent<Ai1>().StartCoroutine("recover"); 
+            }
         }
     }
 }

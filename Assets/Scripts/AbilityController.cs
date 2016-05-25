@@ -51,17 +51,16 @@ public class AbilityController : MonoBehaviour {
 
         //If player right clicks and ability is not on cooldown, then spawn ranged object
         if (Input.GetMouseButtonDown(1) && shootCD == false) {
-            GameObject obj = Instantiate(projectile, new Vector2(transform.position.x,transform.position.y), Quaternion.identity) as GameObject;
-            obj.GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * 1.8f, Mathf.Sin(angle) * 1.8f);
-            shootCount += 1;
+            StartCoroutine("shoot");
+            StartCoroutine("waitShootCD");
         }
 
         //If ammo is zero, then shoot goes on cooldown
-        if (shootCount == 3)
+       /* if (shootCount == 3)
         {
             StartCoroutine("waitShootCD");
 
-        }
+        }*/
     }
 
     //basic attack, melee ability
@@ -96,4 +95,32 @@ public class AbilityController : MonoBehaviour {
         shootCD = false;
     }
 
+    IEnumerator shoot()
+    {
+        //Get mouse position and get rid of z value
+        Vector3 cursorPosition = Input.mousePosition;
+        cursorPosition.z = 0;
+
+        //find character position on screen
+        Vector3 playerPos = Camera.main.WorldToScreenPoint(transform.position);
+
+        //Find differences in the x,y components of player and cursor
+        cursorPosition.x = cursorPosition.x - playerPos.x;
+        cursorPosition.y = cursorPosition.y - playerPos.y;
+
+        //Calculate angle between player and cursor
+        float angle = Mathf.Atan2(cursorPosition.y, cursorPosition.x);
+
+        GameObject obj = Instantiate(projectile, new Vector2(transform.position.x, transform.position.y), Quaternion.identity) as GameObject;
+        obj.GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * 1.8f, Mathf.Sin(angle) * 1.8f);
+        yield return new WaitForSeconds(.1f);
+
+        GameObject obj1 = Instantiate(projectile, new Vector2(transform.position.x, transform.position.y), Quaternion.identity) as GameObject;
+        obj1.GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * 1.8f, Mathf.Sin(angle) * 1.8f);
+        yield return new WaitForSeconds(.1f);
+
+        GameObject obj2 = Instantiate(projectile, new Vector2(transform.position.x, transform.position.y), Quaternion.identity) as GameObject;
+        obj2.GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Cos(angle) * 1.8f, Mathf.Sin(angle) * 1.8f);
+
+    }
 }

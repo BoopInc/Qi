@@ -18,6 +18,7 @@ public class CameraController : MonoBehaviour {
     public float leaveZoomSpeed;
     public float ResetCameraTime;
     public bool reset;
+    public float shakeTime;
 
     public float startSmootTimeX, StartSmoothTimeY;
     public float startXSmoothX, StartXSmoothY;
@@ -45,9 +46,7 @@ public class CameraController : MonoBehaviour {
 
     void Update()
     {
-       
 
-       
     }
 
     void FixedUpdate()
@@ -75,6 +74,50 @@ public class CameraController : MonoBehaviour {
             cam.transform.position = new Vector3(Mathf.SmoothStep(transform.position.x, xPos, xSmoothX), Mathf.SmoothStep(transform.position.y, yPos, xSmoothY), -10);
             //Camera.transform.position = new Vector3(xPos, yPos, -10);
         }
+
+    }
+
+    IEnumerator Shake() {
+        float elaspedTime = 0;
+
+        while (elaspedTime < shakeTime)
+        {
+            elaspedTime += Time.deltaTime;
+
+            float percentComplete = elaspedTime / shakeTime;
+            float damper = 1 - Mathf.Clamp(4 * percentComplete - 3, 0 , 1);
+
+            float x = Random.Range(-1,2);
+            float y = Random.Range(-1,2);
+            x *= damper / 90;
+            y *= damper / 90;
+
+            Camera.main.transform.position = new Vector3(Camera.main.transform.position.x + x/2, Camera.main.transform.position.y + y/2, -10);
+            yield return null;
+        }
+
+    }
+
+    IEnumerator LightShake()
+    {
+        float elaspedTime = 0;
+
+        while (elaspedTime < shakeTime/3)
+        {
+            elaspedTime += Time.deltaTime;
+
+            float percentComplete = elaspedTime / shakeTime;
+            float damper = 1 - Mathf.Clamp(4 * percentComplete - 3.5f, 0, 1);
+
+            float x = Random.Range(-1, 2);
+            float y = Random.Range(-1, 2);
+            x *= damper / 90;
+            y *= damper / 90;
+
+            Camera.main.transform.position = new Vector3(Camera.main.transform.position.x + x / 4, Camera.main.transform.position.y + y / 4, -10);
+            yield return null;
+        }
+
     }
 
 }

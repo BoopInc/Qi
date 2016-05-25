@@ -17,8 +17,8 @@ public class StatManager : MonoBehaviour {
 
 	void Start () {
         //Set Stat Values
-        health = 10;
-        stamina = 20;
+        health = 4;
+        stamina = 4;
         regenStamina = true;
 	}
 	
@@ -28,8 +28,8 @@ public class StatManager : MonoBehaviour {
         healthBar.GetComponent<Slider>().value = health;
 
         //Cap health
-        if (health > 10) {
-            setHealth(10);
+        if (health > 5) {
+            setHealth(5);
         }
 
         //Lower stamins limit(0)
@@ -38,8 +38,8 @@ public class StatManager : MonoBehaviour {
         }
 
         //Cap stamina
-        if (stamina > 10) {
-            setStamina(10);
+        if (stamina > 5) {
+            setStamina(5);
         }
 
         //if stamina regen is activated then add to stamina
@@ -54,6 +54,12 @@ public class StatManager : MonoBehaviour {
 
     public void changeHealth(float num) {
         health = health + num;
+        if (num < 0)
+        {
+            GameObject cam = GameObject.FindGameObjectWithTag("Camera");
+            cam.GetComponent<CameraController>().StopCoroutine("Shake");
+            cam.GetComponent<CameraController>().StartCoroutine("Shake");
+        }
     }
 
     void setStamina(float num) {

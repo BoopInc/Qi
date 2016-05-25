@@ -47,7 +47,7 @@ public class Ai1 : MonoBehaviour {
 
     void Start() {
         currentState = State.Wander;
-        StartCoroutine("WalkAround");
+        StartCoroutine("WanderCR");
         stopWalking = false;
         stuntime = 0;
         stun = false;
@@ -62,6 +62,7 @@ public class Ai1 : MonoBehaviour {
         //Setting
         HealthBar.transform.position = transform.position + new Vector3(0, .06f, 0);
         HealthBar.transform.rotation = healthRot;
+
     }
 
     void updateStates()
@@ -92,19 +93,20 @@ public class Ai1 : MonoBehaviour {
         myWidth = GetComponent<SpriteRenderer>().bounds.extents.x;
         myHeight = GetComponent<SpriteRenderer>().bounds.extents.y;
 
-        distance = Vector2.Distance(Player, transform.position);
         Player = GameObject.FindGameObjectWithTag("Player").transform.position;
+        distance = Vector2.Distance(Player, transform.position);
 
+        //If player is in range, chase them
         if (Player.x <= transform.position.x + xAgro && Player.x >= transform.position.x - xAgro
-            && Player.y <= transform.position.y + yAgro && Player.y >= transform.position.y - yAgro && !Physics2D.Raycast(transform.position, PlayerDirection, 100f, Wall))
+            && Player.y <= transform.position.y + yAgro && Player.y >= transform.position.y - yAgro && !Physics2D.Raycast(transform.position, PlayerDirection, .1f, Wall))
         { 
             currentState = State.Chase;
         }
     }
 
     void Chase() {
-        distance = Vector2.Distance(Player, transform.position);
         Player = GameObject.FindGameObjectWithTag("Player").transform.position;
+        distance = Vector2.Distance(Player, transform.position);
 
         if (stuntime > 0)
         {
@@ -121,8 +123,14 @@ public class Ai1 : MonoBehaviour {
             Ydif = Player.y - transform.position.y;
             PlayerDirection = new Vector2(Xdif, Ydif);
 
+            //Move towards player if not stunned
             if (!Physics2D.Raycast(transform.position, PlayerDirection, .1f, Wall))
+            {
                 GetComponent<Rigidbody2D>().AddForce(PlayerDirection.normalized * chaseSpeed);
+            }
+            else {
+                currentState = State.Wander;
+            }
         }
         else
         {
@@ -133,18 +141,23 @@ public class Ai1 : MonoBehaviour {
         Debug.DrawLine(transform.position, PlayerDirection * .1f);
 
 
-        if (GetComponent<Rigidbody2D>().velocity.x == 0 && GetComponent<Rigidbody2D>().velocity.y == 0
+        /*if (GetComponent<Rigidbody2D>().velocity.x == 0 && GetComponent<Rigidbody2D>().velocity.y == 0
             && Physics2D.Raycast(transform.position, PlayerDirection, .1f, Wall))
         {
             currentState = State.nothing;
         }
+        */
 
+       /*  if (distance > .6f && !Physics2D.Raycast(transform.position, PlayerDirection, .03f, Wall))
+         {
+             currentState = State.Wander;
+             StartCoroutine("WanderCR");
 
-        if (distance > 1f && !Physics2D.Raycast(transform.position, PlayerDirection, .1f, Wall))
-        {
-            currentState = State.Wander;
-            StartCoroutine("WalkAround");
+         }*/
 
+        if (distance > .6f && Physics2D.Raycast(transform.position, PlayerDirection, .01f, Wall)) {
+            currentState = State.nothing;
+            StartCoroutine("delaySwitchToWander2");
         }
 
         if (Player.x <= transform.position.x + xAAgro && Player.x >= transform.position.x - xAAgro
@@ -199,8 +212,6 @@ public class Ai1 : MonoBehaviour {
             turnAroundY();
         }
 
-        print(directionX + " " + directionY);
-
         if (!stopWalking)
         {
             myVel = new Vector2(directionX * speed * transform.right.x * .1f, directionY * speed * transform.up.y * .1f);
@@ -218,7 +229,7 @@ public class Ai1 : MonoBehaviour {
         Player = GameObject.FindGameObjectWithTag("Player").transform.position;
 
         if (Player.x <= transform.position.x + xAgro && Player.x >= transform.position.x - xAgro
-            && Player.y <= transform.position.y + yAgro && Player.y >= transform.position.y - yAgro && !Physics2D.Raycast(transform.position, PlayerDirection, 1f, Wall))
+            && Player.y <= transform.position.y + yAgro && Player.y >= transform.position.y - yAgro && !Physics2D.Raycast(transform.position, PlayerDirection, .1f, Wall))
         {
             currentState = State.Chase;
         }
@@ -226,7 +237,7 @@ public class Ai1 : MonoBehaviour {
         GetComponent<Rigidbody2D>().velocity = myVel;
     }
 
-    IEnumerator WalkAround()
+    IEnumerator WanderCR()
     {
         directionX = -1;
         directionY = -1;
@@ -263,7 +274,7 @@ public class Ai1 : MonoBehaviour {
         yield return new WaitForSeconds(.5f);
         stopWalking = false;
 
-        StartCoroutine("WalkAround");
+        StartCoroutine("WanderCR");
     }
 
     void WalkAroundSkip()
@@ -296,14 +307,7 @@ public class Ai1 : MonoBehaviour {
         }
 
         stopWalking = false;
-        StartCoroutine("WalkAround");
-    }
-
-    void OnCollisionEnter2D(Collision2D other) {
-        if (other.gameObject.tag == "Player") {
-            stun = true;
-            stuntime = 1;
-        }
+        StartCoroutine("WanderCR");
     }
 
     void turnAroundX()
@@ -312,11 +316,6 @@ public class Ai1 : MonoBehaviour {
         Vector3 currentRot = transform.eulerAngles;
         currentRot.y += 180;
         transform.eulerAngles = currentRot;
-        //Flip ui
-        //Vector3 hbRot = HealthBar.transform.eulerAngles;
-        //Vector2 hPos = HealthBar.transform.position;
-        //hbRot.y += 180;
-        //HealthBar.transform.eulerAngles = hbRot;
         HealthBar.transform.position = transform.position + new Vector3(0, .06f, 0);
         HealthBar.transform.rotation = healthRot;
     }
@@ -327,11 +326,6 @@ public class Ai1 : MonoBehaviour {
         Vector3 currentRot = transform.eulerAngles;
         currentRot.x += 180;
         transform.eulerAngles = currentRot;
-        //Flip ui
-        // Vector3 hbRot = HealthBar.transform.eulerAngles;
-        //Vector2 hPos = HealthBar.transform.position;
-        //hbRot.x += 180;
-        //HealthBar.transform.eulerAngles = hbRot;
         HealthBar.transform.position = transform.position + new Vector3(0, .06f, 0);
         HealthBar.transform.rotation = healthRot;
     }
@@ -345,8 +339,6 @@ public class Ai1 : MonoBehaviour {
         distance = Vector2.Distance(Player, transform.position);
         Player = GameObject.FindGameObjectWithTag("Player").transform.position;
 
-      
-
         yield return new WaitForSeconds(1f);
 
         if (Physics2D.Raycast(transform.position, PlayerDirection, 100f, Wall)) {
@@ -357,21 +349,34 @@ public class Ai1 : MonoBehaviour {
 
     }
 
-    IEnumerator delaySwitchToAttack()
+    public IEnumerator delaySwitchToAttack()
     {
         //Tilt
+
+
         Vector2 PlayerPosition;
         PlayerPosition.x = Player.x - transform.position.x;
         PlayerPosition.y = Player.y - transform.position.y;
 
         float angle = Mathf.Atan2(PlayerPosition.y, PlayerPosition.x) * (180 / Mathf.PI);
+        yield return new WaitForSeconds(.34f);
 
-        yield return new WaitForSeconds(.3f);
 
         Instantiate(AttackField,transform.position, Quaternion.Euler(new Vector3(0, 0, angle - 90)));
 
-        yield return new WaitForSeconds(.1f);
+        yield return new WaitForSeconds(.6f);
 
+        currentState = State.Chase;
+    }
+
+    public IEnumerator delaySwitchToWander2() {
+        yield return new WaitForSeconds(2);
+        currentState = State.Wander;
+        StartCoroutine("WanderCR");
+    }
+
+    public IEnumerator recover() {
+        yield return new WaitForSeconds(.20f);
         currentState = State.Chase;
     }
 
@@ -379,5 +384,13 @@ public class Ai1 : MonoBehaviour {
         yield return new WaitForSeconds(1f);
     }
 
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            stun = true;
+            stuntime = 1;
+        }
+    }
 
 }

@@ -20,7 +20,7 @@ public class projectileDeath : MonoBehaviour {
         if (other.gameObject.tag == "Enemy")
         {
             other.gameObject.GetComponent<Ai1>().currentState = Ai1.State.Chase;
-            other.gameObject.GetComponent<EnemyHealthManager>().changeHealth(-2f);
+            other.gameObject.GetComponent<EnemyHealthManager>().changeHealth(-1f);
             StopCoroutine("attackFrame");
             Destroy(gameObject);
         }
